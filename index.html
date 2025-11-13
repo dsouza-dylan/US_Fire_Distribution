@@ -245,16 +245,26 @@ h1#map-title {
   <div class="header-controls">
     <div class="center-controls">
       <div id="loading-spinner" style="
-        width: 33px;
-        height: 33px;
+        width: 25px;
+        height: 25px;
         border: 3px solid rgba(255,255,255,0.3);
         border-top: 3px solid #ff6b35;
         border-radius: 50%;
         animation: spin 1s linear infinite;
         display: none;
       "></div>
-      <button id="back-us" class="back-us-btn">⬅ US Map</button>
+
+      <div id="state-control">
+        <span id="click-text" style="
+          font-weight: 600;
+          color: #ff6b35;
+          font-size: 1rem;
+          display: inline-block;
+        ">Click on a state to interact</span>
+        <button id="back-us" class="back-us-btn" style="display:none;">⬅ US Map</button>
+      </div>
     </div>
+
     <div class="header-right">
       <button class="mode-toggle" id="mode-toggle" aria-label="Toggle theme">
         <span class="icon">☀️</span>
@@ -307,7 +317,18 @@ const stateColor = d3.scaleSequential(d3.interpolateOranges).clamp(true);
 const countyColor = d3.scaleSequential(d3.interpolateOranges).clamp(true);
 
 const backButton = document.getElementById('back-us');
-function toggleBackButton(show){ backButton.style.display = show ? 'block' : 'none'; }
+const clickText = document.getElementById('click-text');
+
+function toggleBackButton(show) {
+  if (show) {
+    backButton.style.display = 'inline-flex';
+    clickText.style.display = 'none';
+  } else {
+    backButton.style.display = 'none';
+    clickText.style.display = 'inline-block';
+  }
+}
+
 backButton.addEventListener('click',()=>{ drawUSView(+monthRangeBottom.value); });
 
 Promise.all([
