@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>US Fire Map — Interactive State & County Heatmap 2024</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+
+<style>
+html,body {height:100%; margin:0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
+body {background:#0f0f0f; color:#fff; display:flex; flex-direction:column; align-items:center; transition: background 0.3s, color 0.3s;}
+body.light-mode {background:#fafafa; color:#111;}
+
+h1#map-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 2.2rem;
+  color: #ff6b35;
+  text-align: center;
+  width: 100%;
+  background: #0a0a0a;
+  padding: 10px 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  transition: background 0.3s, color 0.3s;
+  position: relative;
+}
+
+body.light-mode h1#map-title {
+  background: #fff;
+  color: #ff6b35;
+}
+
+/* Top-right mode toggle */
+.top-right-control {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Main map area */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  margin-top: 0;
+}
+
+#map-wrap {
+  flex:1; 
+  position:relative; 
+  background:#0a0a0a; 
+  display:flex; 
+  flex-direction:column; 
+  justify-content:center; 
+  align-items:center; 
+  width:100%; 
+  transition: background 0.3s;
+}
+
+body.light-mode #map-wrap {background:#fff;}
+
+svg {max-width:100%; max-height:100%; display:block;}
+
+/* States and counties */
+.state { stroke:#1a1a1a; stroke-width:1.5; cursor:pointer; transition:all 0.2s; }
+.state:hover { opacity:0.85; stroke:#ff6b35; stroke-width:2; }
+
+.county { stroke:#1a1a1a; stroke-width:0.6; cursor:pointer; transition: all 0.2s; }
+.county:hover { opacity:0.85; stroke:#ff6b35; stroke-width:2; }
+
+/* Tooltip */
+.tooltip {
+  position:absolute; pointer-events:none; background:rgba(0,0,0,0.95); backdrop-filter:blur(10px); color:#fff;
+  padding:10px 14px; border-radius:8px; font-size:0.85rem; opacity:0; transform:translate(-50%,-120%);
+  transition:opacity 120ms ease; white-space:nowrap; z-index:100; border:1px solid #333; box-shadow:0 4px 20px rgba(0,0,0,0.5);
+}
+
+body.light-mode .tooltip {
+  background:rgba(255,255,255,0.95); color:#111; border:1px solid #ccc;
+}
+
+.tooltip.show {opacity:1;}
+
+/* Footer slider */
+footer {
+  width: 100vw; left: 0; right: 0; background: #0a0a0a; color: #ff6b35; display: flex; justify-content: center; align-items: center;
+  position: fixed; bottom: 0; z-index: 50; padding: 30px 0; transition: background 0.3s, color 0.3s;
+}
+
+body.light-mode footer { background: #fff; color: #ff6b35; }
+
+.bottom-navbar { display: flex; gap: 16px; align-items: center; justify-content: center; }
+.slider-wrap { display: flex; align-items: center; gap: 12px; }
+
+#month-range-bottom { width:350px; height:6px; background:#2a2a2a; border-radius:3px; outline:none; -webkit-appearance:none;}
+#month-range-bottom::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; background:#ff6b35; border-radius:50%; cursor:pointer; transition:all 0.2s;}
+#month-range-bottom::-webkit-slider-thumb:hover { background:#ff8c5a; transform:scale(1.1); }
+#month-range-bottom::-moz-range-thumb { width:16px; height:16px; background:#ff6b35; border-radius:50%; cursor:pointer; border:none; }
+
+#month-label-bottom {color:#fff;}
+body.light-mode #month-label-bottom {color:#111;}
+
+/* Mode toggle */
+.mode-toggle {
+  background: #fff; color: #000; border: 1px solid #333; border-radius: 50%; width: 40px; height: 40px;
+  cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.3); padding:0;
+}
+
+body.light-mode .mode-toggle {
+  background: #000; color: #fff; border: 1px solid #ccc; box-shadow: 0 2px 8px rgba(255,255,255,0.2);
+}
+
+.mode-toggle:hover { transform: scale(1.1); }
+
+/* Back button improved with slider font */
+.back-us-btn {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  padding: 10px 18px;
+  border-radius: 999px; /* pill shape */
+  background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+  color: #fff;
+  font-weight: 600;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  border: none;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  z-index: 100;
+  display: none; /* shown only in state view */
+}
+
+.back-us-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  background: linear-gradient(135deg, #ff7b50, #ffa16f);
+}
+
+body.light-mode .back-us-btn {
+  background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+  color: #fff;
+}
+
+
+
+@media(max-width:900px){ 
+  #month-range-bottom {width:140px;} 
+  .top-right-control { position: static; transform: none; margin-top: 12px; }
+  h1#map-title { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+h1#map-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px; /* space between title and controls */
+  margin: 0;
+  font-weight: 700;
+  font-size: 2.2rem;
+  color: #ff6b35;
+  width: 100%;
+  background: #0a0a0a;
+  padding: 16px 0 12px 0; /* extra top padding optional */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  transition: background 0.3s, color 0.3s;
+  position: relative;
+}
+
+.header-controls {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center; /* center the spinner + back button */
+  position: relative;      /* for absolute positioning of mode toggle */
+}
+
+.center-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* space between spinner and back button */
+}
+
+.header-right {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+}
+
+
+
+/* Remove absolute positioning from old back button */
+.back-us-btn {
+  position: static; /* no longer absolute */
+  display: inline-flex; /* show by default */
+}
+.top-right-control {
+  position: static;
+  transform: none;
+  margin: 0;
+}
+
+
+/* Remove previous absolute positioning hacks */
+.header-right {
+  position: absolute;
+  top: 50%;
+  right: 80px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  z-index: 100;
+}
+
+/* Ensure toggle is always on top */
+.mode-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  position: relative; /* important so hover scaling doesn't break layout */
+}
+
+.mode-toggle:hover {
+  transform: scale(1.1);
+}
+
+
+</style>
+</head>
+<body>
+
+<h1 id="map-title">
+  United States: Active Fires (2024)
+  <div class="header-controls">
+    <div class="center-controls">
+      <div id="loading-spinner" style="
+        width: 33px;
+        height: 33px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-top: 3px solid #ff6b35;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        display: none;
+      "></div>
+      <button id="back-us" class="back-us-btn">⬅ US Map</button>
+    </div>
+    <div class="header-right">
+      <button class="mode-toggle" id="mode-toggle" aria-label="Toggle theme">
+        <span class="icon">☀️</span>
+      </button>
+    </div>
+  </div>
+</h1>
+
+<main>
+<div id="map-wrap">
+  <svg id="map"></svg>
+  <div class="tooltip" id="tooltip"></div>
+</div>
+</main>
+
+<footer>
+  <div class="bottom-navbar">
+    <div class="slider-wrap">
+      <label for="month-range-bottom" style="font-size:1rem; font-weight:700;">Month:</label>
+      <input id="month-range-bottom" type="range" min="1" max="12" step="1" value="1">
+      <div id="month-label-bottom" style="min-width:46px; text-align:left; font-weight:600;">Jan</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// --- constants ---
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STATE_NAMES = {
+  '01':'alabama','02':'alaska','04':'arizona','05':'arkansas','06':'california','08':'colorado',
+  '09':'connecticut','10':'delaware','12':'florida','13':'georgia','15':'hawaii','16':'idaho',
+  '17':'illinois','18':'indiana','19':'iowa','20':'kansas','21':'kentucky','22':'louisiana',
+  '23':'maine','24':'maryland','25':'massachusetts','26':'michigan','27':'minnesota','28':'mississippi',
+  '29':'missouri','30':'montana','31':'nebraska','32':'nevada','33':'new_hampshire','34':'new_jersey',
+  '35':'new_mexico','36':'new_york','37':'north_carolina','38':'north_dakota','39':'ohio','40':'oklahoma',
+  '41':'oregon','42':'pennsylvania','44':'rhode_island','45':'south_carolina','46':'south_dakota',
+  '47':'tennessee','48':'texas','49':'utah','50':'vermont','51':'virginia','53':'washington',
+  '54':'west_virginia','55':'wisconsin','56':'wyoming'
+};
+
+const WIDTH = window.innerWidth;
+const HEIGHT = window.innerHeight - 140;
+const svg = d3.select('#map').attr('width', WIDTH).attr('height', HEIGHT);
+const g = svg.append('g');
+const tooltip = d3.select('#tooltip');
+
+let statesData=null, countiesData=null, usMonthlySummary={}, currentMode='us', currentStateName=null, currentStateData=[], currentStateCounties=[], monthlyFireData={};
+let projection = d3.geoAlbersUsa().translate([WIDTH/2, HEIGHT/2]).scale(1000);
+let path = d3.geoPath().projection(projection);
+const stateColor = d3.scaleSequential(d3.interpolateOranges).clamp(true);
+const countyColor = d3.scaleSequential(d3.interpolateOranges).clamp(true);
+
+// Back button
+const backButton = document.getElementById('back-us');
+function toggleBackButton(show){ backButton.style.display = show ? 'block' : 'none'; }
+backButton.addEventListener('click',()=>{ drawUSView(+monthRangeBottom.value); });
+
+// --- Load US data ---
+Promise.all([
+  d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json'),
+  d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/counties-10m.json'),
+  d3.csv('us_summary_2024_monthly.csv')
+]).then(([statesJson, countiesJson, summaryCsv])=>{
+  statesData = topojson.feature(statesJson, statesJson.objects.states).features;
+  countiesData = topojson.feature(countiesJson, countiesJson.objects.counties).features;
+  summaryCsv.forEach(row=>{
+    const state = row.state.toLowerCase();
+    const month = +row.month;
+    if(!usMonthlySummary[state]) usMonthlySummary[state]={};
+    usMonthlySummary[state][month]={count:+row.fire_count, brightness:+row.total_brightness};
+  });
+  drawUSView(10);
+  monthRangeBottom.value = 10;
+  monthLabelBottom.textContent = MONTHS[9];
+});
+
+// --- Draw US view ---
+function drawUSView(monthNum=1){
+  currentMode='us'; currentStateName=null;
+  toggleBackButton(false);
+  projection = d3.geoAlbersUsa(); path=d3.geoPath().projection(projection);
+  const usFeature={type:"FeatureCollection", features:statesData};
+  projection.fitSize([WIDTH, HEIGHT * 0.9], usFeature);
+  g.transition().duration(750).attr('transform','translate(0,0) scale(1)');
+  g.selectAll('*').remove();
+
+  const stateFireData={};
+  Object.keys(STATE_NAMES).forEach(fips=>{
+    const stateName = STATE_NAMES[fips];
+    const data = usMonthlySummary[stateName]?.[monthNum] || {count:0};
+    stateFireData[fips]=data.count;
+  });
+  const maxCount = d3.max(Object.values(stateFireData))||1;
+  stateColor.domain([0,maxCount]);
+
+  g.append('g').attr('id','states')
+    .selectAll('path')
+    .data(statesData)
+    .enter()
+    .append('path')
+    .attr('class','state')
+    .attr('d',path)
+    .attr('fill', d=>{
+      const fips=String(d.id).padStart(2,'0');
+      const fires = stateFireData[fips] || 0;
+      return fires>0 ? stateColor(fires) : '#ffe5d4';
+    })
+    .on('mouseover',(event,d)=>{
+      const fips=String(d.id).padStart(2,'0'); const stateName=STATE_NAMES[fips];
+      const fires = stateFireData[fips]||0;
+      tooltip.html(`<div style="font-weight:700">${stateName.replace('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+                    <div>${fires.toLocaleString()} fires (${MONTHS[monthNum-1]})</div>`)
+        .style('left', event.pageX+'px').style('top', event.pageY+'px').classed('show', true);
+    })
+    .on('mouseout',()=>tooltip.classed('show',false))
+    .on('click',(event,d)=>{
+      if(currentMode === 'state') return;
+      const fips=String(d.id).padStart(2,'0'); const stateName=STATE_NAMES[fips];
+      zoomToState(fips,stateName);
+    });
+}
+
+// --- Zoom to state ---
+async function zoomToState(stateFips,stateName){
+  const spinner = document.getElementById('loading-spinner');
+  spinner.style.display = 'block'; // show spinner
+
+  try {
+    const csvData = await d3.csv(`state_data/${stateName}_2024.csv`);
+    currentStateData = csvData.map(r=>({
+      latitude:+r.latitude, 
+      longitude:+r.longitude, 
+      brightness:+r.brightness, 
+      date:new Date(r.acq_date), 
+      month:new Date(r.acq_date).getMonth()+1
+    }));
+
+    currentMode='state'; currentStateName=stateName;
+    toggleBackButton(true);
+    currentStateCounties = countiesData.filter(d=>Math.floor(d.id/1000)===+stateFips);
+    if(!currentStateCounties.length){alert('No county data for this state'); return;}
+
+    g.selectAll('#states path')
+    .attr('opacity', d => {
+      const fips = String(d.id).padStart(2, '0');
+      return fips === stateFips ? 1 : 0.3;   // highlight current state, gray out others
+    })
+    .style('pointer-events', d => {
+      const fips = String(d.id).padStart(2, '0');
+      return fips === stateFips ? 'auto' : 'none'; // disable clicks on other states
+    });
+    precomputeMonthlyFireData(); 
+    drawCountyHeatmap(1);
+
+    const bounds = path.bounds({type:"FeatureCollection", features:currentStateCounties});
+    const dx=bounds[1][0]-bounds[0][0]; const dy=bounds[1][1]-bounds[0][1];
+    const x=(bounds[0][0]+bounds[1][0])/2; const y=(bounds[0][1]+bounds[1][1])/2;
+    const scale=0.75*Math.min(WIDTH/dx, HEIGHT/dy);
+    const translate=[WIDTH/2 - scale*x, HEIGHT/2 - scale*y];
+    g.transition().duration(750).attr('transform',`translate(${translate}) scale(${scale})`);
+
+  } catch(err){ 
+    console.error(err); 
+    alert("Failed to load state data."); 
+  } finally {
+    spinner.style.display = 'none'; // hide spinner after zoom completes
+  }
+}
+
+// --- Month slider ---
+const monthRangeBottom = document.getElementById('month-range-bottom');
+const monthLabelBottom = document.getElementById('month-label-bottom');
+
+monthRangeBottom.addEventListener('input', () => {
+  const monthNum = +monthRangeBottom.value;
+  monthLabelBottom.textContent = MONTHS[monthNum - 1];
+  if (currentMode === 'state') drawCountyHeatmap(monthNum);
+  else drawUSView(monthNum);
+});
+
+// --- Precompute & draw counties ---
+function precomputeMonthlyFireData(){
+  monthlyFireData={};
+  currentStateCounties.forEach(c=>monthlyFireData[c.id]=Array(12).fill(0));
+  currentStateData.forEach(fire=>{
+    const county=currentStateCounties.find(c=>d3.geoContains(c,[fire.longitude,fire.latitude]));
+    if(county) monthlyFireData[county.id][fire.month-1]+=1;
+  });
+}
+
+function drawCountyHeatmap(monthNum){
+  if(!currentStateCounties.length) return;
+  currentStateCounties.forEach(c=>c.fireValue=monthlyFireData[c.id]?.[monthNum-1]||0);
+  const maxValue=d3.max(currentStateCounties,d=>d.fireValue);
+  countyColor.domain([0,maxValue||1]);
+
+  let countiesG = g.select('#counties');
+  if(countiesG.empty()){
+    countiesG = g.append('g').attr('id','counties')
+      .selectAll('path').data(currentStateCounties).enter()
+      .append('path').attr('class','county')
+      .on('mouseover',(event,d)=>{
+        tooltip.html(`<div style="font-weight:700">${d.properties?.name||'Unknown'} County</div>
+                      <div>Fires: ${d.fireValue.toLocaleString()}</div>`)
+          .style('left',event.pageX+'px').style('top',event.pageY+'px').classed('show',true);
+      }).on('mouseout',()=>tooltip.classed('show',false));
+  } else countiesG = countiesG.selectAll('path').data(currentStateCounties);
+
+  countiesG.attr('fill',d=>d.fireValue>0?countyColor(d.fireValue):'#fafafa').attr('d',path);
+}
+
+// --- Light/Dark mode toggle ---
+const modeToggle = document.getElementById('mode-toggle');
+const modeIcon = modeToggle.querySelector('.icon');
+
+modeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+  modeIcon.textContent = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
+});
+</script>
+
+</body>
+</html>
