@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>US Fire Distribution (2024)</title>
+<title>Mapping US Fires from Space (2024)</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
@@ -271,7 +271,7 @@ body.light-mode .caption {
 <body>
 
 <h1 id="map-title">
-  United States: Active Fires (2024)
+  Mapping US Fires from Space (2024)
   <div class="header-controls">
     <div class="center-controls">
       <div id="loading-spinner" style="
@@ -322,13 +322,50 @@ body.light-mode .caption {
   <div class="legend-item"><span style="background:#f97316"></span>40,000 – 100,000</div>
   <div class="legend-item"><span style="background:#b54700"></span>100,000+</div>
 </div>
-<section id="map-description" style="max-width:900px; padding-bottom: 100px; margin:40px auto; font-size:1rem; line-height:1.6;">
-    <p>After examination of the data provided by NASA's MODIS, we discovered interesting geospatial data relating to fires in the United States that were detected by Terra and Aqua satellites. We were able to pull data from 2024 geographically located in the United States, with features like fire confidence level, day or night, brightness, date, and geolocation. Due to the nature of the geospatial data we were able to implement an interactive geographic map displaying wildfire count with different filters. We determined that the count of fires was the most robust feature to use compared to brightness, and the user may not be able to interpret brightness as satellite cloud cover can skew the brightness of detected fires.</p>
+<section id="map-description" style="max-width:900px; padding-bottom:100px; margin:40px auto; font-size:1rem; line-height:1.6;">
 
-    <p>Upon understanding the information that we wanted to use, we brainstormed ways to show the information, such as an interactive bar plot or map, ultimately going with the map since we wanted to directly communicate where the fires were happening. We debated focusing on one state for the sake of memory and static webpage performance, but after filtering the data in pandas we discovered that we were able to get a dataset of the full year that worked on the static webpage without any performance issues, by using separate state-level CSV files to improve loading performance and reduce initial page weight.</p>
+  <h2>Team Members</h2>
+  <ul>
+    <li><strong>Dylan Dsouza:</strong> Prototyping, Implementation, Design</li>
+    <li><strong>Jaden Goelkel:</strong> Data Cleaning, Debugging, Design</li>
+    <li><strong>Adit Gautam:</strong> Background Research, Writeup, Design</li>
+    <li><strong>Noah Neuweg:</strong></li>
+  </ul>
 
-    <p>The design of the visualization included the following elements: an orange theme to represent fire intuitively, a heatmap system with varying color intensities to represent density of detected fires, a simple tooltip showing county or state name and number of fires, support for both light and dark mode, a scrollable month selector with months shortened to three-letter abbreviations to improve responsiveness, the ability to zoom into a specific state for more localized analysis, a back button to return to the overview of the United States, a loading indicator since some states take longer to load due to dataset size, a default month of October 2024 which was chosen because it contains a good distribution of wildfire events, the use of a geographic map as the primary visualization combined with D3 functions for state and county segmentation using latitude and longitude. These design decisions were made to balance clarity, usability, and performance. The orange color palette and heatmap gradients were chosen because they naturally communicate the concept of fire intensity and frequency. The map-based layout was preferred over bar plots because geographic context is essential when discussing wildfires and it makes spatial patterns immediately visible. The simplified tooltip, scroller, and zoom-in functionality were included to avoid overwhelming users with data while still making deeper exploration accessible. Together, these decisions created an interface that is intuitive, visually coherent, and efficient for exploring geospatial wildfire data.</p>
-  </section>
+  <h2>Project Overview</h2>
+  <p>
+    After examining data provided by NASA’s MODIS, we were immediately interested in the geospatial fire data detected by Terra and Aqua satellites. The sensors provide information about brightness, time, location (latitude and longitude), confidence, and energy released. Using D3 and the geospatial data, we implemented an interactive map of the United States that aggregates data on both the state and county levels to visually represent the total energy released by fires.
+  </p>
+
+  <h2>Data Selection & Aggregation</h2>
+  <p>
+    We decided that <strong>Total Fire Radiation Power (FRP)</strong>, a measure of energy released, was the most reliable way to represent fire intensity. While we initially prototyped using fire count, we found that it could be misleading (large numbers of low-intensity fires could exaggerate a region’s perceived fire severity). FRP bins were chosen based on the distribution of our dataset, as there is no universal scientific consensus defining FRP categories.
+  </p>
+
+  <h2>Visualization Approach</h2>
+  <p>
+    We prototyped multiple representations, including interactive bar plots and maps, ultimately selecting a map. The geospatial encoding aligns closely with satellite data and effectively communicates where fires occur. We considered focusing on a single state for performance reasons, but filtering the data in pandas revealed that the full-year dataset could be displayed on a static webpage without issues. To optimize performance, we implemented separate state-level CSV files, reducing initial page load time.
+  </p>
+
+  <h2>Design Features</h2>
+  <ul>
+    <li>Orange color theme to intuitively represent fire.</li>
+    <li>Heatmap system with varying color intensities to represent total energy released.</li>
+    <li>Simple tooltip showing county or state name and number of fires.</li>
+    <li>Support for light and dark modes.</li>
+    <li>Scrollable month selector with three-letter abbreviations for responsiveness.</li>
+    <li>Ability to zoom into a state for localized analysis and a back button to return to the US overview.</li>
+    <li>Loading indicator for states with larger datasets.</li>
+    <li>Default month: October 2024, chosen for its representative wildfire distribution.</li>
+    <li>Geographic map combined with D3 functions for state and county segmentation.</li>
+  </ul>
+
+  <p>
+    These design decisions balance clarity, usability, and performance. The map-based layout provides essential geographic context, making spatial patterns immediately visible. Simplified tooltips, scroller, and zoom functionality prevent user overload while allowing deeper exploration. Together, these choices create an intuitive, visually coherent interface for exploring geospatial wildfire data.
+  </p>
+
+</section>
+
 </main>
 
 <footer>
