@@ -554,41 +554,43 @@ monthRangeBottom.addEventListener('input', () => {
 
 function precomputeMonthlyFireData(){
   monthlyFireData = {};
-  
+  monthlyFRPData = {}; // new object to store FRP
+
   currentStateCounties.forEach(c => {
     monthlyFireData[c.id] = Array(12).fill(0);
+    monthlyFRPData[c.id] = Array(12).fill(0); // initialize FRP array
   });
-  
+
   let matchedFires = 0;
   let unmatchedFires = 0;
-  
+
   currentStateData.forEach(fire => {
     let matched = false;
-    
+
     for(let i = 0; i < currentStateCounties.length; i++) {
       const county = currentStateCounties[i];
       try {
         if(d3.geoContains(county, [fire.longitude, fire.latitude])) {
           monthlyFireData[county.id][fire.month - 1]++;
+          monthlyFRPData[county.id][fire.month - 1] += fire.frp || 0; // accumulate FRP
           matchedFires++;
           matched = true;
           break;
         }
       } catch(e) {
-        // Silently continue if geoContains fails
+        // silently continue
       }
     }
-    
+
     if(!matched) {
       unmatchedFires++;
     }
   });
-  
+
   const debugText = `Fires: ${currentStateData.length}<br>Matched: ${matchedFires}<br>Unmatched: ${unmatchedFires}<br>Counties: ${currentStateCounties.length}`;
   updateDebugInfo(debugText);
-  console.log(`Matched ${matchedFires} out of ${currentStateData.length} fires to ${currentStateCounties.length} counties`);
-  console.log('Monthly fire data sample:', Object.entries(monthlyFireData).slice(0, 3));
 }
+
 
 function drawCountyHeatmap(monthNum){
   if(!currentStateCounties.length) return;
@@ -615,8 +617,12 @@ function drawCountyHeatmap(monthNum){
     })
     .on('mouseover', (event, d) => {
       const countyName = d.properties?.name || 'Unknown';
+      const fires = monthlyFireData[d.id]?.[monthNum-1] || 0;
+      const frp = monthlyFRPData[d.id]?.[monthNum-1] || 0;
+
       tooltip.html(`<div style="font-weight:700">${countyName} County</div>
-                    <div>${d.fireValue.toLocaleString()} fires (${MONTHS[monthNum-1]})</div>`)
+                    <div>${fires.toLocaleString()} fires (${MONTHS[monthNum-1]})</div>
+                    <div>Total FRP: ${frp.toLocaleString()} MW</div>`)
         .style('left', event.pageX + 'px')
         .style('top', event.pageY + 'px')
         .classed('show', true);
