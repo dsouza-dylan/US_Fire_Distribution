@@ -282,6 +282,14 @@ body.light-mode .legend {
   border: 1px solid #ccc;
 }
 
+body.light-mode #map-description { color: #000; }
+body.light-mode p,
+body.light-mode .legend h3,
+body.light-mode .legend-item,
+body.light-mode .tooltip {
+  color: #111 !important;
+}
+
 </style>
 </head>
 <body>
@@ -301,12 +309,6 @@ body.light-mode .legend {
       "></div>
 
       <div id="state-control">
-        <span id="click-text" style="
-          font-weight: 600;
-          color: #ff6b35;
-          font-size: 1rem;
-          display: inline-block;
-        ">Click on a state to interact</span>
         <button id="back-us" class="back-us-btn" style="display:none;">⬅ US Map</button>
       </div>
     </div>
@@ -342,6 +344,13 @@ body.light-mode .legend {
     <div class="legend-item"><span style="background:#f97316"></span>101 – 500</div>
     <div class="legend-item"><span style="background:#b54700"></span>500+</div>
 </div>
+<section id="map-description" style="max-width:900px; padding-bottom: 100px; margin:40px auto; font-size:1rem; line-height:1.6; color:#fff;">
+    <p>After examination of the data provided by NASA’s MODIS, we discovered interesting geospatial data relating to fires in the United States that were detected by Terra and Aqua satellites. We were able to pull data from 2024 geographically located in the United States, with features like fire confidence level, day or night, brightness, date, and geolocation. Due to the nature of the geospatial data we were able to implement an interactive geographic map displaying wildfire count with different filters. We determined that the count of fires was the most robust feature to use compared to brightness, and the user may not be able to interpret brightness as satellite cloud cover can skew the brightness of detected fires.</p>
+
+    <p>Upon understanding the information that we wanted to use, we brainstormed ways to show the information, such as an interactive bar plot or map, ultimately going with the map since we wanted to directly communicate where the fires were happening. We debated focusing on one state for the sake of memory and static webpage performance, but after filtering the data in pandas we discovered that we were able to get a dataset of the full year that worked on the static webpage without any performance issues, by using separate state-level CSV files to improve loading performance and reduce initial page weight.</p>
+
+    <p>The design of the visualization included the following elements: an orange theme to represent fire intuitively, a heatmap system with varying color intensities to represent density of detected fires, a simple tooltip showing county or state name and number of fires, support for both light and dark mode, a scrollable month selector with months shortened to three-letter abbreviations to improve responsiveness, the ability to zoom into a specific state for more localized analysis, a back button to return to the overview of the United States, a loading indicator since some states take longer to load due to dataset size, a default month of October 2024 which was chosen because it contains a good distribution of wildfire events, the use of a geographic map as the primary visualization combined with D3 functions for state and county segmentation using latitude and longitude. These design decisions were made to balance clarity, usability, and performance. The orange color palette and heatmap gradients were chosen because they naturally communicate the concept of fire intensity and frequency. The map-based layout was preferred over bar plots because geographic context is essential when discussing wildfires and it makes spatial patterns immediately visible. The simplified tooltip, scroller, and zoom-in functionality were included to avoid overwhelming users with data while still making deeper exploration accessible. Together, these decisions created an interface that is intuitive, visually coherent, and efficient for exploring geospatial wildfire data.</p>
+  </section>
 </main>
 
 <footer>
@@ -381,7 +390,6 @@ const stateColor = d3.scaleSequential(d3.interpolateOranges).clamp(true);
 const countyColor = d3.scaleSequential(d3.interpolateOranges).clamp(true);
 
 const backButton = document.getElementById('back-us');
-const clickText = document.getElementById('click-text');
 
 function getStateBucketColor(count) {
   if (count === 0) return '#fffaf5';
@@ -404,10 +412,8 @@ function getCountyBucketColor(count) {
 function toggleBackButton(show) {
   if (show) {
     backButton.style.display = 'inline-flex';
-    clickText.style.display = 'none';
   } else {
     backButton.style.display = 'none';
-    clickText.style.display = 'inline-block';
   }
 }
 
