@@ -235,6 +235,52 @@ h1#map-title {
   transform: scale(1.1);
 }
 
+.legend {
+  font-family: sans-serif;
+  background: rgba(10, 10, 10, 0.9);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  width: 120px;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  border: 1px solid #333;
+  transition: background 0.3s, color 0.3s, border 0.3s;
+}
+
+body.light-mode .legend {
+  background: rgba(255, 255, 255, 0.9);
+  color: #111;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+
+.legend h3 {
+  font-size: 14px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.legend-item span {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  margin-right: 8px;
+  border: 1px solid #ccc;
+}
 
 </style>
 </head>
@@ -278,6 +324,24 @@ h1#map-title {
   <svg id="map"></svg>
   <div class="tooltip" id="tooltip"></div>
 </div>
+<div id="legend-state" class="legend">
+  <h3>Number of Fires</h3>
+  <div class="legend-item"><span style="background:#fffaf5"></span>0</div>
+    <div class="legend-item"><span style="background:#ffebd6"></span>1 – 50</div>
+    <div class="legend-item"><span style="background:#ffc999"></span>51 – 200</div>
+    <div class="legend-item"><span style="background:#ff9c52"></span>201 – 500</div>
+    <div class="legend-item"><span style="background:#f97316"></span>501 – 1,500</div>
+    <div class="legend-item"><span style="background:#b54700"></span>1,500+</div>
+</div>
+<div id="legend-county" class="legend" style="display:none;">
+  <h3>Number of Fires</h3>
+  <div class="legend-item"><span style="background:#fffaf5"></span>0</div>
+    <div class="legend-item"><span style="background:#ffebd6"></span>1 – 5</div>
+    <div class="legend-item"><span style="background:#ffc999"></span>6 – 25</div>
+    <div class="legend-item"><span style="background:#ff9c52"></span>26 – 100</div>
+    <div class="legend-item"><span style="background:#f97316"></span>101 – 500</div>
+    <div class="legend-item"><span style="background:#b54700"></span>500+</div>
+</div>
 </main>
 
 <footer>
@@ -318,6 +382,24 @@ const countyColor = d3.scaleSequential(d3.interpolateOranges).clamp(true);
 
 const backButton = document.getElementById('back-us');
 const clickText = document.getElementById('click-text');
+
+function getStateBucketColor(count) {
+  if (count === 0) return '#fffaf5';
+  if (count <= 50) return '#ffebd6';
+  if (count <= 200) return '#ffc999';
+  if (count <= 500) return '#ff9c52';
+  if (count <= 1500) return '#f97316';
+  return '#b54700';
+}
+
+function getCountyBucketColor(count) {
+  if (count === 0) return "#fffaf5";
+  if (count <= 5) return "#ffebd6";
+  if (count <= 25) return "#ffc999";
+  if (count <= 100) return "#ff9c52";
+  if (count <= 500) return "#f97316";
+  return "#b54700";
+}
 
 function toggleBackButton(show) {
   if (show) {
@@ -374,10 +456,10 @@ function drawUSView(monthNum=1){
     .append('path')
     .attr('class','state')
     .attr('d',path)
-    .attr('fill', d=>{
-      const fips=String(d.id).padStart(2,'0');
+    .attr('fill', d => {
+      const fips = String(d.id).padStart(2, '0');
       const fires = stateFireData[fips] || 0;
-      return fires>0 ? stateColor(fires) : '#ffe5d4';
+      return getStateBucketColor(fires);
     })
     .on('mouseover',(event,d)=>{
       const fips=String(d.id).padStart(2,'0'); const stateName=STATE_NAMES[fips];
@@ -392,6 +474,7 @@ function drawUSView(monthNum=1){
       const fips=String(d.id).padStart(2,'0'); const stateName=STATE_NAMES[fips];
       zoomToState(fips,stateName);
     });
+  showStateLegend();
 }
 
 async function zoomToState(stateFips,stateName){
@@ -422,7 +505,7 @@ async function zoomToState(stateFips,stateName){
       const fips = String(d.id).padStart(2, '0');
       return fips === stateFips ? 'auto' : 'none';
     });
-    precomputeMonthlyFireData(); 
+    precomputeMonthlyFireData();
     drawCountyHeatmap(1);
 
     const bounds = path.bounds({type:"FeatureCollection", features:currentStateCounties});
@@ -432,12 +515,14 @@ async function zoomToState(stateFips,stateName){
     const translate=[WIDTH/2 - scale*x, HEIGHT/2 - scale*y];
     g.transition().duration(750).attr('transform',`translate(${translate}) scale(${scale})`);
 
-  } catch(err){ 
-    console.error(err); 
-    alert("Failed to load state data."); 
+  } catch(err){
+    console.error(err);
+    alert("Failed to load state data.");
   } finally {
     spinner.style.display = 'none';
   }
+  drawCountyHeatmap(1);
+  showCountyLegend();
 }
 
 const monthRangeBottom = document.getElementById('month-range-bottom');
@@ -461,23 +546,40 @@ function precomputeMonthlyFireData(){
 
 function drawCountyHeatmap(monthNum){
   if(!currentStateCounties.length) return;
-  currentStateCounties.forEach(c=>c.fireValue=monthlyFireData[c.id]?.[monthNum-1]||0);
-  const maxValue=d3.max(currentStateCounties,d=>d.fireValue);
-  countyColor.domain([0,maxValue||1]);
 
-  let countiesG = g.select('#counties');
-  if(countiesG.empty()){
-    countiesG = g.append('g').attr('id','counties')
-      .selectAll('path').data(currentStateCounties).enter()
-      .append('path').attr('class','county')
-      .on('mouseover',(event,d)=>{
-        tooltip.html(`<div style="font-weight:700">${d.properties?.name||'Unknown'} County</div>
-                      <div>Fires: ${d.fireValue.toLocaleString()}</div>`)
-          .style('left',event.pageX+'px').style('top',event.pageY+'px').classed('show',true);
-      }).on('mouseout',()=>tooltip.classed('show',false));
-  } else countiesG = countiesG.selectAll('path').data(currentStateCounties);
+  currentStateCounties.forEach(c => c.fireValue = monthlyFireData[c.id]?.[monthNum-1] || 0);
+  const maxValue = d3.max(currentStateCounties, d => d.fireValue);
+  countyColor.domain([0, maxValue || 1]);
 
-  countiesG.attr('fill',d=>d.fireValue>0?countyColor(d.fireValue):'#fafafa').attr('d',path);
+  g.select('#counties').remove();
+
+  g.append('g')
+    .attr('id','counties')
+    .selectAll('path')
+    .data(currentStateCounties)
+    .join('path')
+    .attr('class','county')
+    .attr('d', path)
+    .attr('fill', d => getCountyBucketColor(d.fireValue))
+    .on('mouseover', (event, d) => {
+      tooltip.html(`<div style="font-weight:700">${d.properties?.name || 'Unknown'} County</div>
+                    <div>${d.fireValue.toLocaleString()} fires (${MONTHS[monthNum-1]})</div>`)
+        .style('left', event.pageX + 'px')
+        .style('top', event.pageY + 'px')
+        .classed('show', true);
+    })
+    .on('mouseout', () => tooltip.classed('show', false));
+}
+
+
+function showStateLegend() {
+  document.getElementById("legend-state").style.display = "block";
+  document.getElementById("legend-county").style.display = "none";
+}
+
+function showCountyLegend() {
+  document.getElementById("legend-state").style.display = "none";
+  document.getElementById("legend-county").style.display = "block";
 }
 
 const modeToggle = document.getElementById('mode-toggle');
