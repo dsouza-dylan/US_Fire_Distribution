@@ -334,17 +334,17 @@ body.light-mode .caption {
 
   <h2>Project Overview</h2>
   <p>
-    After examining data provided by NASA’s MODIS, we were immediately interested in the geospatial fire data detected by Terra and Aqua satellites. The sensors provide information about brightness, time, location (latitude and longitude), confidence, and energy released. Using D3 and the geospatial data, we implemented an interactive map of the United States that aggregates data on both the state and county levels to visually represent the total energy released by fires.
+    After examination of the data provided by NASA’s MODIS, we were immediately interested in the geospatial fire data detected by Terra and Aqua satellites. The sensors on the satellite provide us information about brightness, time, location (in latitude and longitude), confidence, and energy released. With the geospatial data and D3 tools, we implemented an interactive map of the United States, aggregating data on both the state and county level to visually represent the amount of energy released by fires.
   </p>
 
   <h2>Data Selection & Aggregation</h2>
   <p>
-    We decided that <strong>Total Fire Radiation Power (FRP)</strong>, a measure of energy released, was the most reliable way to represent fire intensity. While we initially prototyped using fire count, we found that it could be misleading (large numbers of low-intensity fires could exaggerate a region’s perceived fire severity). FRP bins were chosen based on the distribution of our dataset, as there is no universal scientific consensus defining FRP categories.
+    We decided that <strong>Total Fire Radiation Power (FRP)</strong>, a measure of energy, was the best way to aggregate the data to represent fire intensity. We initially prototyped using fire count, but found that it could be unreliable: if a certain state or county reported a large amount of low intensity fires, it could misrepresent that state or county of having a very intense fire season when it might not have. It is important to note that the bins for FRP are chosen based on the distribution of the data: there is not a universal consensus in the scientific community as to what FRP constitutes a certain category of fire. 
   </p>
 
-  <h2>Visualization Approach</h2>
+  <h2>Prototyping & Approach</h2>
   <p>
-    We prototyped multiple representations, including interactive bar plots and maps, ultimately selecting a map. The geospatial encoding aligns closely with satellite data and effectively communicates where fires occur. We considered focusing on a single state for performance reasons, but filtering the data in pandas revealed that the full-year dataset could be displayed on a static webpage without issues. To optimize performance, we implemented separate state-level CSV files, reducing initial page load time.
+    After understanding the information that we wanted to use we prototyped different representations of the information, such as an interactive bar plot or map, ultimately choosing a map, as we found the geospatial encoding to be most relevant to satellite data. We debated if we wanted to create a visual based on a single state, but after filtering the data in pandas we discovered that we were able to get a dataset of the full year that worked on the static webpage without any performance issues. This solution was implemented using separate state-level CSV files to reduce page overhead.
   </p>
 
   <h2>Design Features</h2>
