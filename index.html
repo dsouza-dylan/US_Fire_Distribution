@@ -22,9 +22,9 @@ h1#map-title {
   margin: 0;
   font-weight: 700;
   font-size: 2.2rem;
-  color: #ff6b35;
+  color: #fff;
   width: 100%;
-  background: #0a0a0a;
+  background: #1a1a1e;
   padding: 16px 0 12px 0;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
   transition: background 0.3s, color 0.3s;
@@ -32,8 +32,12 @@ h1#map-title {
 }
 
 body.light-mode h1#map-title {
-  background: #fff;
-  color: #ff6b35;
+  background: #ececec;
+  color: #1a1a1e;
+}
+
+.header{
+  background-color: #1a1a1e;
 }
 
 .header-controls {
@@ -74,7 +78,7 @@ main {
 #map-wrap {
   flex:1; 
   position:relative; 
-  background:#0a0a0a; 
+  background:#1a1a1e; 
   display:flex; 
   flex-direction:column; 
   justify-content:center; 
@@ -83,7 +87,7 @@ main {
   transition: background 0.3s;
 }
 
-body.light-mode #map-wrap {background:#fff;}
+body.light-mode #map-wrap {background:#ececec;}
 
 svg {max-width:100%; max-height:100%; display:block;}
 
@@ -164,7 +168,7 @@ body.light-mode .back-us-btn {
 @media(max-width:900px){ 
   #month-range-bottom {width:140px;} 
   .header-right { position: static; transform: none; margin-top: 12px; }
-  h1#map-title { padding: 12px; }
+  h1#map-title { padding: 12px; background-color: #1a1a1e;}
 }
 
 @keyframes spin {
@@ -180,7 +184,7 @@ body.light-mode .back-us-btn {
   padding: 12px 16px;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  width: 120px;
+  width: 160px;
   position: absolute;
   right: 24px;
   top: 50%;
@@ -285,16 +289,16 @@ body.light-mode .debug-info {
   <div class="debug-info" id="debug-info">Debug info will appear here</div>
 </div>
 <div id="legend-state" class="legend">
-  <h3>Number of Fires</h3>
+  <h3>Total FRP</h3>
   <div class="legend-item"><span style="background:#fffaf5"></span>0</div>
-  <div class="legend-item"><span style="background:#ffebd6"></span>1 – 50</div>
-  <div class="legend-item"><span style="background:#ffc999"></span>51 – 200</div>
-  <div class="legend-item"><span style="background:#ff9c52"></span>201 – 500</div>
-  <div class="legend-item"><span style="background:#f97316"></span>501 – 1,500</div>
-  <div class="legend-item"><span style="background:#b54700"></span>1,500+</div>
+  <div class="legend-item"><span style="background:#ffebd6"></span>0 – 1,000</div>
+  <div class="legend-item"><span style="background:#ffc999"></span>1,000 – 10,000</div>
+  <div class="legend-item"><span style="background:#ff9c52"></span>10,000 – 100,000</div>
+  <div class="legend-item"><span style="background:#f97316"></span>100,000 – 500,000</div>
+  <div class="legend-item"><span style="background:#b54700"></span>500,000+</div>
 </div>
 <div id="legend-county" class="legend" style="display:none;">
-  <h3>Number of Fires</h3>
+  <h3>Total FRP</h3>
   <div class="legend-item"><span style="background:#fffaf5"></span>0</div>
   <div class="legend-item"><span style="background:#ffebd6"></span>1 – 5</div>
   <div class="legend-item"><span style="background:#ffc999"></span>6 – 25</div>
@@ -366,6 +370,24 @@ function getCountyBucketColor(count) {
   return "#b54700";
 }
 
+  function getStateFRPColor(frp) {
+  if (frp === 0) return '#fffaf5';
+  if (frp <= 1000) return '#ffebd6';
+  if (frp <= 10000) return '#ffc999';
+  if (frp <= 100000) return '#ff9c52';
+  if (frp <= 500000) return '#f97316';
+  return '#b54700';
+}
+
+function getCountyFRPColor(frp) {
+  if (frp === 0) return '#fffaf5';
+  if (frp <= 50) return '#ffebd6';
+  if (frp <= 250) return '#ffc999';
+  if (frp <= 1000) return '#ff9c52';
+  if (frp <= 5000) return '#f97316';
+  return '#b54700';
+}
+
 function toggleBackButton(show) {
   backButton.style.display = show ? 'inline-flex' : 'none';
 }
@@ -433,8 +455,9 @@ function drawUSView(monthNum=1){
     .attr('d',path)
     .attr('fill', d => {
       const fips = String(d.id).padStart(2, '0');
-      const fires = stateFireData[fips] || 0;
-      return getStateBucketColor(fires);
+      const stateName = STATE_NAMES[fips]; 
+      const stateData = usMonthlySummary[stateName]?.[monthNum] || {count:0, frp:0};
+      return getStateFRPColor(stateData.frp || 0);
     })
     .on('mouseover',(event,d)=>{
       const fips=String(d.id).padStart(2,'0'); 
@@ -612,7 +635,8 @@ function drawCountyHeatmap(monthNum){
     .attr('class','county')
     .attr('d', path)
     .attr('fill', d => {
-      const color = getCountyBucketColor(d.fireValue);
+      const frp = monthlyFRPData[d.id]?.[monthNum-1] || 0;
+      const color = getCountyFRPColor(frp);
       return color;
     })
     .on('mouseover', (event, d) => {
