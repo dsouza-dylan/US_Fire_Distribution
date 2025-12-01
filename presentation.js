@@ -66,18 +66,21 @@ async function runSteps(signal) {
 
     console.log("STEP 1: US view month 1");
     checkAbort(signal);
+    updateMonthUI(1);
     drawUSView(1);
     await sleep(1500, signal);
 
     console.log("STEP 2: Zoom to California");
     checkAbort(signal);
     await zoomToState("06", "california");
+    updateMonthUI(6);
     await sleep(2000, signal);
 
     console.log("STEP 3: Monthly playback");
     for (let m = 1; m <= 12; m++) {
         console.log("  – month", m);
         checkAbort(signal);
+        updateMonthUI(m);
         drawCountyHeatmap(m);
         await sleep(350, signal);
     }
@@ -85,6 +88,7 @@ async function runSteps(signal) {
     console.log("STEP 4: Zoom back to US");
     checkAbort(signal);
     drawUSView(1);
+    updateMonthUI(1);
     await sleep(1500, signal);
 
     console.log("All steps complete.");
@@ -108,4 +112,11 @@ function checkAbort(signal) {
         console.log("ABORT detected.");
         throw "aborted";
     }
+}
+
+function updateMonthUI(monthNum) {
+    monthRangeBottom.value = monthNum;
+    monthLabelBottom.textContent = MONTHS[monthNum - 1];
+
+    console.log("UI month updated:", MONTHS[monthNum - 1]);
 }
