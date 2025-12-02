@@ -279,3 +279,30 @@ body.light-mode .presentation-toggle-btn.running {
   color:#fff;
   border-color:#b71c1c;
 }
+
+#explanation-box {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+#explanation-box h3 {
+  color: #ff6b35;
+  font-weight: 700;
+}
+
+#explanation-box p {
+  margin: 0 0 12px 0;
+}
+
+#explanation-box p:last-child {
+  margin-bottom: 0;
+}
+
+body.light-mode #explanation-box {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #111 !important;
+  border: 1px solid #ccc !important;
+}
+
+body.light-mode #explanation-box h3 {
+  color: #ff6b35;
+}
