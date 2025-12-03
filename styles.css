@@ -306,3 +306,19 @@ body.light-mode #explanation-box {
 body.light-mode #explanation-box h3 {
   color: #ff6b35;
 }
+
+#presentation-overlay {
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+body.light-mode #presentation-overlay {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+body.light-mode #presentation-overlay h2 {
+  color: #ff6b35;
+}
+
+body.light-mode #presentation-overlay p {
+  color: #333;
+}

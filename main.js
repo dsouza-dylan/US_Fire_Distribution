@@ -69,7 +69,11 @@ function updateDebugInfo(text) {
   console.log(text);
 }
 
-backButton.addEventListener('click',()=>{ drawUSView(+monthRangeBottom.value); });
+backButton.addEventListener('click',()=>{ 
+  // Prevent interaction during presentation
+  if (window.presentationActive || !window.presentationCompleted) return;
+  drawUSView(+monthRangeBottom.value); 
+});
 
 Promise.all([
   d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json'),
@@ -147,6 +151,8 @@ function drawUSView(monthNum=1){
     .on('mouseout',()=>tooltip.classed('show',false))
     .on('click',(event,d)=>{
       if(currentMode === 'state') return;
+      // Check if presentation is active or not completed
+      if (window.presentationActive || !window.presentationCompleted) return;
       const fips=String(d.id).padStart(2,'0'); 
       const stateName=STATE_NAMES[fips];
       zoomToState(fips,stateName);
@@ -238,6 +244,8 @@ const monthRangeBottom = document.getElementById('month-range-bottom');
 const monthLabelBottom = document.getElementById('month-label-bottom');
 
 monthRangeBottom.addEventListener('input', () => {
+  // Prevent interaction during presentation
+  if (window.presentationActive || !window.presentationCompleted) return;
   const monthNum = parseInt(monthRangeBottom.value);
   monthLabelBottom.textContent = MONTHS[monthNum - 1];
   if (currentMode === 'state') {
