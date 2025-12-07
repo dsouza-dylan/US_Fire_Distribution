@@ -322,3 +322,82 @@ body.light-mode #presentation-overlay h2 {
 body.light-mode #presentation-overlay p {
   color: #333;
 }
+
+.hide-captions .caption {
+    display: none !important;
+}
+
+/* Presentation mode: hide captions, header-right, and state-control */
+.presentation-mode .caption,
+.presentation-mode .header-right,
+.presentation-mode #state-control {
+    display: none !important;
+}
+
+/* Hide dark mode and presentation buttons */
+#mode-toggle, .caption,
+#presentation-toggle {
+  display: none !important;
+}
+.legend-header {
+  display: flex;
+  align-items: center;  /* vertically center the i with h3 */
+  gap: 8px;             /* spacing between h3 and i */
+  margin-bottom: 10px;
+}
+
+.legend-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.info-icon {
+  position: relative;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #333;
+  color: #fff;
+  font-weight: normal;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+
+.info-icon:hover {
+  background: #555;
+}
+
+.info-tooltip {
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-80%);
+  background: #333;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  z-index: 1000;
+  width: 400px;
+}
+
+.info-tooltip.show {
+  opacity: 1;
+}
+
+body.light-mode .info-tooltip {
+  background: rgba(255,255,255,0.95);
+  color: #111;
+  border: 1px solid #ccc;
+}

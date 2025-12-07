@@ -3,15 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Final Project Prototype: US Fire Distribution (2024)</title>
+  <title>America On Fire: Mapping US Fire Distribution</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
   <link rel="stylesheet" href="styles.css"> 
 </head>
 <body>
 
-<h1 id="map-title">
-  Final Project Prototype - United States: Active Fires (2024)
+<h1 id="map-title" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap;">
+  <span style="white-space: nowrap;">
+    <span style="color: #ff6b35;">America on Fire:</span> Mapping US Fire Distribution (2024)
+  </span>
   <div class="header-controls">
     <div class="center-controls">
       <div id="loading-spinner" style="
@@ -40,12 +42,16 @@
 
 <main>
 <div id="map-wrap">
+  <div class="caption">Explore the distribution of US fires in 2024 using NASA MODIS data. Click on a state to explore.<br><em>Total FRP (Fire Radiation Power) measures the sum of energy in megawatts (MW) released by fires in a month.</em></div>
   <svg id="map"></svg>
   <div class="tooltip" id="tooltip"></div>
   <div class="debug-info" id="debug-info">Debug info will appear here</div>
 </div>
 <div id="legend-state" class="legend">
-  <h3>Total FRP</h3>
+  <div class="legend-header">
+    <h3>Total FRP</h3>
+    <div class="info-icon" data-tooltip="Total FRP (Fire Radiation Power) measures the sum of energy in megawatts (MW) released by fires in a month.">i</div>
+  </div>
   <div class="legend-item"><span style="background:#fffaf5"></span>0</div>
   <div class="legend-item"><span style="background:#ffebd6"></span>0 – 1,000</div>
   <div class="legend-item"><span style="background:#ffc999"></span>1,000 – 10,000</div>
@@ -54,7 +60,10 @@
   <div class="legend-item"><span style="background:#b54700"></span>500,000+</div>
 </div>
 <div id="legend-county" class="legend" style="display:none;">
-  <h3>Total FRP</h3>
+  <div class="legend-header">
+    <h3>Total FRP</h3>
+    <div class="info-icon" data-tooltip="Total FRP (Fire Radiation Power) measures the sum of energy in megawatts (MW) released by fires in a month.">i</div>
+  </div>
   <div class="legend-item"><span style="background:#fffaf5"></span>0</div>
   <div class="legend-item"><span style="background:#ffebd6"></span>1 – 5</div>
   <div class="legend-item"><span style="background:#ffc999"></span>6 – 25</div>

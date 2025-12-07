@@ -163,7 +163,9 @@ function drawUSView(monthNum=1){
 
 async function zoomToState(stateFips, stateName){
   const spinner = document.getElementById('loading-spinner');
-  spinner.style.display = 'block';
+  if (!window.presentationActive) {
+    spinner.style.display = 'block';
+  }
   updateDebugInfo(`Loading ${stateName}...`);
 
   try {
@@ -226,6 +228,10 @@ async function zoomToState(stateFips, stateName){
     const y = (bounds[0][1] + bounds[1][1]) / 2;
     const scale = 0.75 * Math.min(WIDTH/dx, HEIGHT/dy);
     const translate = [WIDTH/2 - scale*x, HEIGHT/2 - scale*y];
+    if (presentationActive) {
+      const offset = WIDTH * 0.15; // move state left by 25% of SVG width
+      translate[0] += offset;
+    }
     
     g.transition().duration(750).attr('transform',`translate(${translate}) scale(${scale})`);
     
@@ -351,6 +357,17 @@ modeToggle.addEventListener('click', () => {
   document.body.classList.toggle('light-mode');
   modeIcon.textContent = document.body.classList.contains('light-mode') ? '🌙' : '☀️';
 });
+
+document.querySelectorAll('.info-icon').forEach(icon => {
+  const tooltip = document.createElement('div');
+  tooltip.className = 'info-tooltip';
+  tooltip.innerHTML = icon.getAttribute('data-tooltip'); // use innerHTML
+  icon.appendChild(tooltip);
+
+  icon.addEventListener('mouseenter', () => tooltip.classList.add('show'));
+  icon.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+});
+
 
 // Show debug info temporarily for testing
 // debugInfo.style('display', 'block');
