@@ -835,9 +835,12 @@ async function runSteps(signal) {
     continueBtn.style.pointerEvents = "auto";
     await waitForContinue(signal);
 
+    showBlankUSPage("Nationwide, in just one year...", "...over 8 million acres burned.", ["8 million", "one year"]);
+    await waitForContinue(signal);
+
     showBlankUSPage("Wildfire risk is everywhere...","... now it's your turn to explore.", ["everywhere", "explore"]);
     await waitForContinue(signal);
-    
+
     PINGS_ENABLED = false;
 
     if (monthSlider) {
