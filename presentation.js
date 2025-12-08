@@ -782,6 +782,7 @@ async function runSteps(signal) {
 
     showBlankUSPage("But the largest fire of 2024...", "... was NOT in California.", ["largest", "NOT"]);
     await waitForContinue(signal);
+    PINGS_ENABLED = true;
 
     await zoomToState("48", "texas");
     if (typeof drawCountyHeatmap === "function") {
@@ -836,6 +837,8 @@ async function runSteps(signal) {
 
     showBlankUSPage("Wildfire risk is everywhere...","... now it's your turn to explore.", ["everywhere", "explore"]);
     await waitForContinue(signal);
+    
+    PINGS_ENABLED = false;
 
     if (monthSlider) {
         monthSlider.value = 10; // October

@@ -24,6 +24,14 @@ let path = d3.geoPath().projection(projection);
 
 const backButton = document.getElementById('back-us');
 
+let PINGS_ENABLED = false;
+const HOTSPOT_MONTHS = {
+    california: [6, 7, 8, 9],  // summer
+    oregon:     [6, 7, 8, 9,10,11,12],  // summer
+    texas:      [1, 2, 3, 4],     // winter (includes Feb)
+};
+
+
 function getStateBucketColor(count) {
   if (count === 0) return '#fffaf5';
   if (count <= 50) return '#ffebd6';
@@ -338,6 +346,77 @@ function drawCountyHeatmap(monthNum){
         .classed('show', true);
     })
     .on('mouseout', () => tooltip.classed('show', false));
+    drawPingsForTopCounties(monthNum);
+}
+
+
+function drawPingsForTopCounties(monthNum) {
+
+    if (!PINGS_ENABLED) {
+        g.select("#pings").remove();
+        return;
+    }
+
+    const hotspotMonths = getHotspotMonthsForState(currentStateName);
+
+    if (!hotspotMonths.includes(monthNum)) {
+        g.select("#pings").remove();
+        return;
+    }
+
+    if (!currentStateCounties.length) return;
+
+    const countyData = currentStateCounties.map(c => ({
+        id: c.id,
+        geometry: c,
+        frp: monthlyFRPData[c.id]?.[monthNum - 1] || 0
+    }));
+
+    const top3 = countyData
+        .sort((a, b) => b.frp - a.frp)
+        .slice(0, 3);
+
+    g.select("#pings").remove();
+    const pingLayer = g.append("g").attr("id", "pings");
+
+    top3.forEach(entry => {
+        const centroid = path.centroid(entry.geometry);
+
+        if (!centroid || isNaN(centroid[0])) return;
+
+        let pulse = pingLayer.append("circle")
+            .attr("cx", centroid[0])
+            .attr("cy", centroid[1])
+            .attr("r", 0)
+            .attr("fill", "none")
+            .attr("stroke", "#ffcc00")
+            .attr("stroke-width", 2)
+            .attr("opacity", 0.7);
+
+        pulse.transition()
+            .duration(1500)
+            .attr("r", 40)
+            .attr("opacity", 0)
+            .on("end", function repeat() {
+                d3.select(this)
+                    .attr("opacity", .7)
+                    .attr("r", 0)
+                    .transition()
+                    .duration(1500)
+                    .attr("r", 40)
+                    .attr("opacity", 0)
+                    .on("end", repeat);
+            });
+
+        pingLayer.append("circle")
+            .attr("cx", centroid[0])
+            .attr("cy", centroid[1])
+            .attr("r", 6)
+            .attr("fill", "#ffcc00");
+    });
+}
+function getHotspotMonthsForState(stateName) {
+    return HOTSPOT_MONTHS[stateName] || [];
 }
 
 function showStateLegend() {
