@@ -38,4 +38,4 @@ An interactive map exploring **wildfire activity across the United States in 202
 
 ## 🧑‍💻 Team
 
-Built by **[Adit Gautam, Dylan Dsouza, Jaden Goelkel, and Noah Neuweg]**.
+Built by **Adit Gautam, Dylan Dsouza, Jaden Goelkel, and Noah Neuweg**.
