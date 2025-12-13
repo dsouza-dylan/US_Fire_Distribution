@@ -32,10 +32,10 @@ An interactive map exploring **wildfire activity across the United States in 202
 
 ## 🙏 Acknowledgments
 
-- **DSC 106** at UC San Diego for proding detailed guidance and feedback
+- **DSC 106** at UC San Diego for providing detailed guidance and feedback
 
 ---
 
-## 🧑‍💻 Authors
+## 🧑‍💻 Team
 
 Built by **[Adit Gautam, Dylan Dsouza, Jaden Goelkel, and Noah Neuweg]**.
