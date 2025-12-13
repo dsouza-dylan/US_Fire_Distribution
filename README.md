@@ -1,4 +1,4 @@
-# 🔥 America on Fire
+# 🔥 America on Fire: Mapping U.S. Fire Distribution
 
 An interactive map exploring **wildfire activity across the United States in 2024** using NASA MODIS satellite data. The project lets users explore wildfire intensity by **month**, **state**, and **county**, and includes a **guided presentation mode** that walks through key wildfire patterns and surprising hotspots.
 
